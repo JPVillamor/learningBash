@@ -1,0 +1,327 @@
+*****BASH SCRIPTING - MONOLITHIC CHEAT SHEET*****
+
+ ====================
+|0 REALLY BASIC STUFF|
+ ====================
+
+1 Always have the SHEBANG up there on line 1.
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+
+#single line comment
+
+echo Hello world
+
+_____________________________________________________________________________________
+
+ ===========
+|1 VARIABLES|
+ ===========
+
+SYNTAX:
+
+1 variable references should have $ before variable name
+2 setting variables EXCLUDE $
+3 uppercase names make the variables stand out.
+
+4 to represent COMMAND LINE ARGUMENTS the variable $1 is used for the first argument. $2 is used for the second one.
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+#copy script
+
+cp $1 $2 #syntax for cp is the same when in the terminal!
+
+#verification of successful copy command:
+
+echo Details for $2 #literally prints "Details ..."
+ls -lh $2 #runs ls in the destination directory to verify the copy worked.
+_____________________________________________________________________________________
+
+
+SPECIAL VARIABLES:
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+#demonstrates the special variables in bash
+
+touch $1
+
+echo $0 is the name of the script
+echo $1 is the first argument passed to this script
+echo $# arguments were passed to this script
+echo $@ are all the arguments passed to this script
+echo $? is the exit status of the most recently run process
+echo $$ is the process ID of the current running script
+echo $USER is running the script
+echo the script is running on $HOSTNAME
+echo $SECONDS since the script started
+echo a random number: $RANDOM
+echo current line number: $LINENO
+_____________________________________________________________________________________
+
+5 the command env will display other special variables.
+6 the user can set variables within a script
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+
+myvar=Hello #formatting: NO spaces next to the '=' NO $ before variable name.
+echo $myvar
+echo #print blank line
+
+sampledir=/etc #variables can be set to directories!
+
+ls $sampledir
+_____________________________________________________________________________________
+
+7 use quotes to instruct bash to interpret a string as one item.
+8 SINGLE QUOTES interpret as a literal
+9 DOUBLE QUOTES allows substitution.
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+#single v. double quotes
+
+myvar='Hello world!'
+echo $myvar #the variable is the string
+
+mystring="I said, $myvar"
+echo $mystring #the myvar variable will be substituted in.
+
+mystring2='I said, $myvar'
+echo $mystring2 #the myvar variable will not be substituted in.
+_____________________________________________________________________________________
+
+10 COMMAND SUBSTITUTION saves the output of a command as a variable.
+   The command is enclosed in $( )
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+#example of command substitution
+myvar=$( ls /etc | wc -l )
+echo There are $myvar entries in /etc.
+_____________________________________________________________________________________
+
+11 when you print command substitutions to the screen it will not print newlines, it will print the output as if it were one line (text wrap)
+12 it is good practice to test the command substitution rather than assume that it works. This can be done using echo, which can be later removed.
+
+13 EXPORTING VARIABLES is a way of using variables across scripts
+   It will not "link" variables like references in C++ (the & operator)
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+#this is the first scope in example
+var1=beep
+var2=boop
+echo $0 :: var1: $var1, var2: $var2
+
+#makes var1 available to child process ./scopeB.sh
+export var1 #Note the absence of the $
+./scopeB.sh
+
+echo $0 :: var1: $var1, var2: $var2
+_____________________________________________________________________________________
+#!/bin/bash
+#second scope in example
+echo $0 :: var1: $var1, var2: $var2
+
+#the following changes will not apply to the variables in the original scope:
+var1=burp 
+var2=bork
+_____________________________________________________________________________________
+OUTPUT:
+./scopeA.sh :: var1: beep, var2: boop
+./scopeB.sh :: var1: beep, var2:
+./scopeA.sh :: var1: beep, var2: boop
+
+ =======
+|2 INPUT|
+ =======
+
+1 bash can take input from the user:
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+
+read VAR1 #note there is no $
+echo $VAR1
+
+#prompt and silent input:
+read -p 'Username: ' USERVAR
+read -sp 'Password: ' PASSVAR #when the user starts typing text will not show up.
+echo
+echo Welcome $USERVAR.
+_____________________________________________________________________________________
+
+2 read can take in multiple variables.
+
+_____________________________________________________________________________________
+#!/bin/bash
+#read can get more than one variable
+
+echo Name three fruits:
+read F1 F2 F3 #the user must give input in this format.
+
+echo first fruit: $F1
+echo second fruit: $F2
+echo third fruit: $F3
+_____________________________________________________________________________________
+
+3 read splits the input string at whitespaces.
+4 if the user inputs more words than the read has allocated variables, any words after the last variable will be joined to the last variable.
+5 if the user inputs less words, the remainder variables will be null.
+
+6 bash can read the stdin file at /dev/stdin and pipe it through a sorting script.
+
+_____________________________________________________________________________________
+$ cat testfile.txt
+Jericho
+Master
+Homer
+Wheel
+Denver
+Allocate
+Cartography
+_____________________________________________________________________________________
+#!/bin/bash
+#demonstrates the piping functionality and stdin
+echo summary of text file:
+echo
+cat /dev/stdin | cut -d' ' -f 1 | sort
+#cut -d' ' defines delimiter as a space
+#-f 1 uses the first field of the data set to then | sort
+#this script should alphabetize the text file.
+_____________________________________________________________________________________
+$ cat testfile.txt | ./summary.sh
+summary of text file:
+
+Allocate
+Cartography
+Denver
+Homer
+Jericho
+Master
+Wheel
+_____________________________________________________________________________________
+
+ ============
+|3 ARITHMETIC|
+ ============
+
+1 the bash command let allows users to input and evaluate arithmetic expressions.
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+
+let a=4+3 #NO spaces
+echo $a
+let "b = 6 + 5" #Spaces allowed if there are quotes
+echo $b
+let a++ #u know what this does.
+echo $a
+let "b = 8 - 5" #reassignment
+echo $b
+let "a = $1 * 5" #takes the first command line argument.
+echo $a
+_____________________________________________________________________________________
+
+2 the ** operator is the exponent, as in Python.
+3 % is the modulus operator.
+4 expr prints the evaluation of an expression.
+5 expr does not save to a variable.
+6 expr syntax looks like: item1 operator item2
+7 spaces are important in expr expressions.
+8 command substitution uses expr to assign output to variable.
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+
+expr 5 + 3
+
+expr "5 + 3" #quotes will just print string
+
+expr 5+3 #no spaces means no evaluation.
+
+expr 5 \* 3
+
+expr 11 % 2
+
+a=$( expr 4 + 3 ) #command sub
+echo $a #7
+
+b=$(( 4 * 3 )) #double parenthese. no escape for *
+echo $b #12
+
+c=$(( a+b )) #can call other variables
+echo $c #19
+
+(( c++ ))
+echo $c #20
+_____________________________________________________________________________________
+
+9 length of variable is given with this syntax:
+	${#variable}
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+#length of variable
+
+a='rocket'
+echo length of rocket: ${#a} #4
+
+b=5642
+echo length of 5642: ${#b} #4
+_____________________________________________________________________________________
+
+ ==============
+|4 CONDITIONALS|
+ ==============
+
+1 if statements syntax:
+if [ condition ]
+then
+  do only if condition is true
+fi
+
+(works):
+_____________________________________________________________________________________
+#!/bin/bash
+# if statement
+if [ $1 -gt 100 ] #if argument is greater than 100,
+then 
+	echo Hey that\'s a large number.
+	pwd
+fi
+date
+_____________________________________________________________________________________
+
+2 the [] in the if statement refers to the test command.
+some operators of the test command:
+!expression        #expression is false
+-n string          #length of string is > 0
+-z string          #" is empty
+string1 = string2  #strings are the same
+string1 != string2 #not the same
+int1 -eq int2      #numerically equal
+int1 -gt int2      #int1 > int2
+int1 -lt int2      #int1 < int2
+-d file            #file exists and is a dir
+-e file            #file exists
+-r file            #exists and is readable
+-s file            #exists and not empty
+-w file            #exists and is writeable
+-x file            #exists and is executable
+
